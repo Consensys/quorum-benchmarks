@@ -1,0 +1,6 @@
+caliper:
+  worker:
+    remote: true
+    communication:
+      method: mqtt
+      address: mqtt://localhost:1883

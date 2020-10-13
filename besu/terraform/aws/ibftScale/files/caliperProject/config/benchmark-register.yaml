@@ -1,0 +1,25 @@
+---
+test:
+  name: covid
+  description: This is an example benchmark for caliper, to test the backend DLT's
+    performance with simple account opening & querying transactions
+  workers:
+    type: local
+    number: 1
+  rounds:
+  - label: register-350
+    description: register people on the chain
+    txNumber: 105000  # 5 minutes
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: 350
+    callback: config/register.js
+
+monitor:
+  type:
+  - docker
+  docker:
+    name:
+    - all
+  interval: 1
