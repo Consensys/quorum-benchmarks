@@ -13,7 +13,7 @@
         besu_version: PARAM_BESU_VERSION
         besu_sync_mode: FULL
         besu_network: ibft
-        besu_rpc_http_api: ["DEBUG","NET","WEB3","ETH","ADMIN","IBFT"]
+        besu_rpc_http_api: ["DEBUG","NET","WEB3","ETH","ADMIN","IBFT","EEA","PRIV"]
         besu_genesis_path: /etc/besu/genesis.json
         besu_bootnodes: ["enode://05e2aab6df08db103fd75c4fb2b8582fe43eebce6a0f077b590a5e7f44ed081e498fa2c57788372d7bc0c41a34394f34c5c11332f4473a1bdf83589316edc2c4@PARAM_BESU_BOOTNODE_IP:30303"]
         besu_host_ip: PARAM_BESU_HOST_IP
@@ -26,5 +26,10 @@
 #         - "-XX:HeapDumpPath=/tmp/oom_heap_dump.hprof"
 #         - "-Xlog:gc*"
           - "-Xmx8G"
+        besu_privacy_enabled: "true"
+        besu_privacy_public_key_file: "/etc/besu/orion.pub"
+        besu_privacy_url: "http://PARAM_BESU_PRIVACY_IP:8888"
+        besu_min_gas: 0
+
 
     - { role: undergreen.prometheus-node-exporter, become: yes }

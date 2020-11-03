@@ -238,6 +238,20 @@ resource "aws_security_group" "eth_sg" {
     cidr_blocks = ["${var.vpc_cidr}"]
   }
 
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["${var.vpc_cidr}"]
+  }
+  
+  ingress {
+    from_port   = 8888
+    to_port     = 8888
+    protocol    = "tcp"
+    cidr_blocks = ["${var.vpc_cidr}"]
+  }
+
   egress {
     from_port       = 0
     to_port         = 0
@@ -294,6 +308,11 @@ resource "aws_instance" "ibft_bootnode" {
     destination = "$HOME/besu/node_db/"
   }
 
+  provisioner "file" {
+    source = "files/orion/keys/bootnode/orion.pub"
+    destination = "$HOME/besu/orion.pub"
+  }
+
   # when the provisioner fires up, wait for the instance to signal its finished booting, before attempting to install packages, apt is locked until then
   provisioner "remote-exec" {
     inline = [
@@ -301,7 +320,7 @@ resource "aws_instance" "ibft_bootnode" {
       "sh $HOME/append_auth_keys.sh ${join(" ", formatlist("'%s'", var.user_ssh_public_keys))}",
       "sudo apt-get update && sudo apt-get install -y apparmor apt-transport-https ca-certificates curl build-essential openjdk-11-jdk python3 python3-setuptools python3-pip python3-dev python3-virtualenv python3-venv virtualenv",
       "[ -e /dev/nvme0n1 ] && sudo mkdir -p /opt/besu/data && sudo mkfs.xfs /dev/nvme0n1 && sudo mount /dev/nvme0n1 /opt/besu/data",
-      "sudo sh $HOME/besu/setup.sh '${var.besu_version}' '${var.besu_download_url}' '${aws_instance.ibft_bootnode.private_ip}'",
+      "sudo sh $HOME/besu/setup.sh '${var.besu_version}' '${var.besu_download_url}' '${aws_instance.ibft_bootnode.private_ip}' '${var.create_orion_nodes ? aws_instance.orion_bootnode[0].private_ip : "0.0.0.0"}'",
       "sleep 30",
     ]
   }
@@ -434,6 +453,11 @@ resource "aws_instance" "ibft_nodes" {
     destination = "$HOME/besu/node_db/"
   }
 
+  provisioner "file" {
+    source = "files/orion/keys/node-${count.index}/orion.pub"
+    destination = "$HOME/besu/orion.pub"
+  }
+
   # when the provisioner fires up, wait for the instance to signal its finished booting, before attempting to install packages, apt is locked until then
   provisioner "remote-exec" {
     inline = [
@@ -441,7 +465,7 @@ resource "aws_instance" "ibft_nodes" {
       "sh $HOME/append_auth_keys.sh ${join(" ", formatlist("'%s'", var.user_ssh_public_keys))}",
       "sudo apt-get update && sudo apt-get install -y apparmor apt-transport-https ca-certificates curl build-essential openjdk-11-jdk python3 python3-setuptools python3-pip python3-dev python3-virtualenv python3-venv virtualenv",
       "[ -e /dev/nvme0n1 ] && sudo mkdir -p /opt/besu/data && sudo mkfs.xfs /dev/nvme0n1 && sudo mount /dev/nvme0n1 /opt/besu/data",
-      "sudo sh $HOME/besu/setup.sh '${var.besu_version}' '${var.besu_download_url}' '${aws_instance.ibft_bootnode.private_ip}'",
+      "sudo sh $HOME/besu/setup.sh '${var.besu_version}' '${var.besu_download_url}' '${aws_instance.ibft_bootnode.private_ip}' '${var.create_orion_nodes ? aws_instance.orion_node[count.index].private_ip : "0.0.0.0"}' ",
       "sleep 30",
     ]
   }
@@ -454,4 +478,121 @@ resource "aws_route53_record" "nodes_dns" {
   type    = "A"
   ttl     = "300"
   records = ["${aws_instance.ibft_nodes[count.index].private_ip}"]
+}
+
+resource "aws_instance" "orion_bootnode" {
+  count = "${var.create_orion_nodes}" ? 1 : 0
+  ami = "${data.aws_ami.ubuntu.id}"
+  instance_type = "${var.orion_instance_type}"
+  key_name = "${var.default_ssh_key}"
+  subnet_id = "${module.vpc.public_subnets[0]}"
+  vpc_security_group_ids = ["${module.ssh_security_group.this_security_group_id}", "${aws_security_group.orion_sg.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.monitoring_profile.name}"
+  associate_public_ip_address = true
+  ebs_optimized = true
+  root_block_device {
+    volume_size = 40
+  }
+  tags = {
+    Name = "orion-${var.vpc_name}-bootnode"
+  }
+
+  connection {
+    type = "ssh"
+    user = "${var.login_user}"
+    host = "${self.public_ip}"
+    private_key = "${file(pathexpand(var.default_ssh_key_path))}"
+  }
+
+  provisioner "file" {
+    source = "../files/orion"
+    destination = "$HOME"
+  }
+
+  provisioner "file" {
+    source = "files/orion/keys/bootnode"
+    destination = "$HOME/keys"
+  }
+
+  # when the provisioner fires up, wait for the instance to signal its finished booting, before attempting to install packages, apt is locked until then
+  provisioner "remote-exec" {
+    inline = [
+      "timeout 120 /bin/bash -c 'until stat /var/lib/cloud/instance/boot-finished 2>/dev/null; do echo waiting ...; sleep 5; done'",
+      "sudo apt-get update && sudo apt-get install -y apparmor apt-transport-https ca-certificates curl build-essential openjdk-11-jdk python3 python3-setuptools python3-pip python3-dev python3-virtualenv python3-venv virtualenv",
+      "sudo sh $HOME/orion/setup_bootnode.sh '${var.orion_version}' '${var.orion_download_url}' '${aws_instance.orion_bootnode[0].private_ip}' '${aws_instance.orion_bootnode[0].private_ip}'",
+      "sleep 30",
+    ]
+  }
+}
+
+resource "aws_instance" "orion_node" {
+  count = "${var.create_orion_nodes}" ? "${var.node_count}" : 0
+  ami = "${data.aws_ami.ubuntu.id}"
+  instance_type = "${var.orion_instance_type}"
+  key_name = "${var.default_ssh_key}"
+  subnet_id = "${module.vpc.public_subnets[0]}"
+  vpc_security_group_ids = ["${module.ssh_security_group.this_security_group_id}", "${aws_security_group.orion_sg.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.monitoring_profile.name}"
+  associate_public_ip_address = true
+  ebs_optimized = true
+  root_block_device {
+    volume_size = 40
+  }
+  tags = {
+    Name = "orion-${var.vpc_name}-node-${count.index}"
+  }
+
+  connection {
+    type = "ssh"
+    user = "${var.login_user}"
+    host = "${self.public_ip}"
+    private_key = "${file(pathexpand(var.default_ssh_key_path))}"
+  }
+
+  provisioner "file" {
+    source = "../files/orion"
+    destination = "$HOME"
+  }
+
+  provisioner "file" {
+    source = "files/orion/keys/node-${count.index}"
+    destination = "$HOME/orion/keys"
+  }
+
+  # when the provisioner fires up, wait for the instance to signal its finished booting, before attempting to install packages, apt is locked until then
+  provisioner "remote-exec" {
+    inline = [
+      "timeout 120 /bin/bash -c 'until stat /var/lib/cloud/instance/boot-finished 2>/dev/null; do echo waiting ...; sleep 5; done'",
+      "sudo apt-get update && sudo apt-get install -y apparmor apt-transport-https ca-certificates curl build-essential openjdk-11-jdk python3 python3-setuptools python3-pip python3-dev python3-virtualenv python3-venv virtualenv",
+      "sudo sh $HOME/orion/setup.sh '${var.orion_version}' '${var.orion_download_url}' '${aws_instance.orion_bootnode[0].private_ip}' '${self.private_ip}' '${self.private_ip}'", 
+      "sleep 30",
+    ]
+  }
+}
+
+resource "aws_security_group" "orion_sg" {
+  name        = "${var.vpc_name}_orion_sg"
+  description = "${var.vpc_name}_orion_sg"
+  vpc_id      = "${module.vpc.vpc_id}"
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["${var.vpc_cidr}"]
+  }
+
+  ingress {
+    from_port   = 8888
+    to_port     = 8888
+    protocol    = "tcp"
+    cidr_blocks = ["${var.vpc_cidr}"]
+  }
+
+  egress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
 }
