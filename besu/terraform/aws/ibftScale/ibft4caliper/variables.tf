@@ -13,10 +13,6 @@ variable "caliper_repo" {
   default = "https://github.com/benjamincburns/caliper"
 }
 
-# variable "caliper_repo" {
-#   default = "https://github.com/hyperledger/caliper"
-# }
-
 variable "caliper_version" {
   #default = "v0.3.0"
   default = "include_deployer_addr_in_context"
