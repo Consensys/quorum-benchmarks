@@ -30,7 +30,6 @@ ansible-galaxy install -r requirements.yml --force --ignore-errors
 ansible-galaxy install -r requirements.yml --force --ignore-errors
 
 # start in stopped state so paths and config are created
-# start in stopped state so paths and config are created
 ansible-playbook -v orion_bootnode.yml --extra-vars="orion_systemd_state=stopped"
 
 # copy keys across & set anything else up
