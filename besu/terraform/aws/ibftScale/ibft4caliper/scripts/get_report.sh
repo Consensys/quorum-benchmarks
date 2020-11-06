@@ -14,19 +14,16 @@ SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 source "$SCRIPTDIR/vars.sh"
 source "$SCRIPTDIR/logging.sh"
 
-log_info "Running benchmark on host $CALIPER_IP"
+log_info "Get report from $CALIPER_IP"
 
 if [[ "$CALIPER_IP" == "" ]]; then
   log_error "Couldn't get hostname of caliper instance"
   exit 1
 fi
 
-ssh \
+scp \
   -i "$SSH_KEYFILE" \
   -o "UserKnownHostsFile=/dev/null" \
   -o "StrictHostKeyChecking=no" \
   -o "ForwardAgent=yes" \
-  ubuntu@$CALIPER_IP <<EOF
-cd caliperProject
-./benchmark.sh
-EOF
+  ubuntu@$CALIPER_IP:/home/ubuntu/caliperProject/report.html .
