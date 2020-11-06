@@ -1,0 +1,21 @@
+version: '2.1'
+orbs:
+  terraform: circleci/terraform@1.1.0
+jobs:
+  single-job-lifecycle:
+    executor: terraform/default
+    steps:
+      - checkout
+      - terraform/init:
+          path: ./besu/terraform/aws/ibftScale/ibft4caliper
+      - terraform/validate:
+          path: ./besu/terraform/aws/ibftScale/ibft4caliper
+      - terraform/apply:
+          path: ./besu/terraform/aws/ibftScale/ibft4caliper
+      - terraform/destroy:
+          path: ./besu/terraform/aws/ibftScale/ibft4caliper
+    working_directory: ~/src
+workflows:
+  single-job-lifecycle:
+    jobs:
+      - single-job-lifecycle
