@@ -1,0 +1,10 @@
+---
+- src: https://github.com/pegasyseng/ansible-role-openjdk11
+  version: master
+  name: pegasyseng.openjdk11
+- src: https://github.com/pegasyseng/ansible-role-orion
+  version: master
+  name: pegasyseng.orion
+- src: undergreen.prometheus-node-exporter
+- src: undergreen.prometheus-exporters-common
+

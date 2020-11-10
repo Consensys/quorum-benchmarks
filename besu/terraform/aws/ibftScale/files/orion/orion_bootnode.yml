@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  connection: local
+  force_handlers: True
+
+
+  roles:
+    
+    - role: pegasyseng.orion
+      vars:
+        orion_version: PARAM_ORION_VERSION
+        orion_download_url: "PARAM_ORION_DOWNLOAD_URL"
+        orion_node_ip: PARAM_ORION_NODE_IP
+        orion_client_ip: PARAM_ORION_CLIENT_IP
+        orion_log4j_config_file: "/opt/log4j/orion-log-config.xml"
+        orion_password_file: "/etc/orion/orion.password"
+        orion_private_keys: ["/etc/orion/orion.key"]
+        orion_public_keys: ["/etc/orion/orion.pub"]
+        orion_othernodes: []
+        #TODO: make this dynamic
+
+    - { role: undergreen.prometheus-node-exporter, become: yes }
