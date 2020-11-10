@@ -1,21 +1,73 @@
 version: '2.1'
 orbs:
   terraform: circleci/terraform@1.1.0
+  slack: circleci/slack@3.4.2
+
 jobs:
-  single-job-lifecycle:
+  caliper-test:
     executor: terraform/default
     steps:
       - checkout
-      - terraform/init:
-          path: ./besu/terraform/aws/ibftScale/ibft4caliper
-      - terraform/validate:
-          path: ./besu/terraform/aws/ibftScale/ibft4caliper
-      - terraform/apply:
-          path: ./besu/terraform/aws/ibftScale/ibft4caliper
-      - terraform/destroy:
-          path: ./besu/terraform/aws/ibftScale/ibft4caliper
+      - run:
+          name: Prepare
+          command: |
+            apk update
+            apk upgrade
+            apk add bash jq curl gettext libintl
+            echo "export COMMIT_HASH=`curl 'https://circleci.com/api/v1.1/project/github/hyperledger/besu/tree/master?filter=completed&shallow=true' | jq '[.[] | select(.workflows.job_name=="publish")][0].vcs_revision'`" >> $BASH_ENV
+      - run:
+          name : Generate config files
+          command : |
+            TEST_TPS=$TPS TEST_TX_NUMBER=$(($TPS*300)) envsubst < ./besu/terraform/aws/ibftScale/files/caliperProject/config/benchmark-register-template.yaml >> ./besu/terraform/aws/ibftScale/files/caliperProject/config/benchmark-register-temp-$TPS.yaml
+            ls ./besu/terraform/aws/ibftScale/files/caliperProject/config/
+      - run:
+          name: Terraform init & validate
+          command: |
+            cd ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline
+            terraform init && terraform validate
+      - run:
+          name: Terraform apply
+          command: |
+            BESU_VERSION=`curl https://raw.githubusercontent.com/hyperledger/besu/master/gradle.properties | cut -d '=' -f 2`
+            cd ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline
+            terraform apply -var 'vpc_name=nightly-perf-test' -var 'default_ssh_key=perf-test' -var 'caliper_version=v0.3.2' -var 'caliper_instance_type=c5.2xlarge' -var 'node_instance_type=c5d.4xlarge' -var 'rpcnode_instance_type=c5d.4xlarge' -var 'bootnode_instance_type=c5d.4xlarge' -var "besu_version=$BESU_VERSION" -auto-approve
+      - run:
+          name: Run Test
+          command: |
+            echo "waiting for the network to start"
+            sleep 60
+            echo "Run test"
+            cd ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline
+            ./scripts/run_test.sh $TPS
+          no_output_timeout: 40m
+      - run:
+          name : Terraform destroy
+          command: |
+            cd ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline
+            terraform destroy -var 'vpc_name=nightly-perf-test' -auto-approve
+          when: always
+      - store_artifacts:
+          name: Uploading report
+          path: ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline/report/
+      - slack/notify:
+          message: ":chupacabra: New report available for this commit $COMMIT_HASH with $TPS tps"
+      - slack/status:
+          fail_only: true
+          failure_message: ":alert: The performance test failed"
     working_directory: ~/src
 workflows:
-  single-job-lifecycle:
+  version: 2
+  nightly:
+    triggers:
+      - schedule:
+          # every day at 17pm UTC
+          cron: "0 17 * * *"
+          filters:
+            branches:
+              only:
+                - test-perf
     jobs:
-      - single-job-lifecycle
+      - caliper-test
+  performance-test:
+    jobs:
+      - caliper-test

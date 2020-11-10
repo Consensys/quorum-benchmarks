@@ -11,4 +11,6 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
-node "$SCRIPTDIR"/../caliper/packages/caliper-cli/caliper.js launch master --caliper-benchconfig config/benchmark.yaml --caliper-networkconfig config/networkconfig.json --caliper-workspace "$SCRIPTDIR"
+BENCHMARK_SCRIPT=${1:-"config/benchmark.yaml"}
+
+node "$SCRIPTDIR"/../caliper/packages/caliper-cli/caliper.js launch master --caliper-benchconfig "$BENCHMARK_SCRIPT" --caliper-networkconfig config/networkconfig.json --caliper-workspace "$SCRIPTDIR"
