@@ -7,8 +7,6 @@ ORION_DOWNLOAD_URL=$2
 ORION_BOOT_NODE_IP=$3
 ORION_NODE_IP=$4
 ORION_CLIENT_IP=$5
-# We arent using private IPs because the vpc arent peered. The public IPs act like real world use cases for us anyway
-#ORION_CLIENT_IP=`curl http://169.254.169.254/latest/meta-data/local-ipv4`
 SCRIPTS_DIR="/home/ubuntu/orion"
 
 sed -i "s/PARAM_ORION_VERSION/$ORION_VERSION/g" $SCRIPTS_DIR/orion.yml
