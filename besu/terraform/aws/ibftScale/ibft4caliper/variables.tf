@@ -9,12 +9,9 @@ variable "azs" {
 }
 
 variable "caliper_repo" {
-  #default = "https://github.com/hyperledger/caliper"
   default = "https://github.com/benjamincburns/caliper"
-}
-
-variable "caliper_repo" {
-  default = "https://github.com/hyperledger/caliper"
+  #the following is the upstream caliper repo
+  #default = "https://github.com/hyperledger/caliper"
 }
 
 variable "caliper_version" {
@@ -100,10 +97,24 @@ variable "bootnode_instance_type" {
   default = "c5d.4xlarge"
 }
 
-variable "rpcnode_instance_type" {
-  default = "t3.medium"
+variable "orion_instance_type" {
+  default = "c5d.4xlarge"
 }
 
-variable "bootnode_instance_type" {
-  default = "t3.medium"
+variable "orion_version" {
+  default = "1.5.1"
 }
+
+variable "orion_download_url" {
+  default = "https://bintray.com/consensys/binaries/download_file?file_path=orion-{{ orion_version }}.tar.gz"
+}
+
+variable "create_orion_nodes" {
+  type = bool
+  default = false
+}
+
+variable "amzn2_base_packages" {
+  default = "wget curl ntp bind-utils iproute vim-enhanced git libselinux-python python python-pip python-setuptools python-virtualenv python3-pip python3 python3-setuptools jq sysstat awslogs make automake gcc gcc-c++ kernel-devel java-11-amazon-corretto.x86_64"
+}
+
