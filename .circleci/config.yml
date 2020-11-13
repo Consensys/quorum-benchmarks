@@ -30,13 +30,14 @@ jobs:
             cd ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline
             if [[ -z "${BUILD_JOB}" ]]; then
               echo "export COMMIT_HASH=`curl 'https://circleci.com/api/v1.1/project/github/hyperledger/besu/tree/master?filter=completed&shallow=true' | jq '[.[] | select(.workflows.job_name=="publish")][0].vcs_revision'`" >> $BASH_ENV
+              BESU_VERSION=`curl "https://raw.githubusercontent.com/hyperledger/besu/$COMMIT_HASH/gradle.properties" | cut -d '=' -f 2`
               DOWNLOAD_LINK="https://bintray.com/hyperledger-org/besu-repo/download_file?file_path=besu-$BESU_VERSION.tar.gz"
             else
               echo "export COMMIT_HASH=`curl "https://circleci.com/api/v1.1/project/github/hyperledger/besu/$BUILD_JOB" | jq '.vcs_revision'`" >> $BASH_ENV
+              BESU_VERSION=`curl "https://raw.githubusercontent.com/hyperledger/besu/$COMMIT_HASH/gradle.properties" | cut -d '=' -f 2`
               DOWNLOAD_LINK=`curl "https://circleci.com/api/v1.1/project/github/hyperledger/besu/$BUILD_JOB/artifacts" | jq -r '[.[] | select(.url|test(".tar.gz"))][0].url'`
             fi
             source $BASH_ENV
-            BESU_VERSION=`curl "https://raw.githubusercontent.com/hyperledger/besu/$COMMIT_HASH/gradle.properties" | cut -d '=' -f 2`
 
             terraform apply -var 'vpc_name=nightly-perf-test' -var 'default_ssh_key=perf-test' -var 'caliper_version=v0.3.2' -var 'caliper_instance_type=c5.2xlarge' -var 'node_instance_type=c5d.4xlarge' -var 'rpcnode_instance_type=c5d.4xlarge' -var 'bootnode_instance_type=c5d.4xlarge' -var "besu_version=$BESU_VERSION" -var "besu_download_url=$DOWNLOAD_LINK" -auto-approve
       - run:
@@ -65,17 +66,6 @@ jobs:
     working_directory: ~/src
 workflows:
   version: 2
-  nightly:
-    triggers:
-      - schedule:
-          # every day at 15pm UTC
-          cron: "0 15 * * *"
-          filters:
-            branches:
-              only:
-                - test-perf
-    jobs:
-      - caliper-test
   performance-test:
     jobs:
       - caliper-test
