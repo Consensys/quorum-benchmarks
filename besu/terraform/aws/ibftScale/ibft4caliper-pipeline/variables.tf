@@ -59,12 +59,6 @@ variable "user_ssh_public_keys" {
   ]
 }
 
-# make sure the besu_version and download_url match in the number
-# eg: 1.3.8 for version is used for anything that contains 1.3.8-rc.. or 1.3.8-snapshot.. etc
-variable "besu_version" {
-  default = "1.5.5"
-}
-
 variable "besu_download_url" {
   default = "https://bintray.com/hyperledger-org/besu-repo/download_file?file_path=besu-{{besu_version}}.tar.gz"
 }
