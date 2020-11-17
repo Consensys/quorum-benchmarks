@@ -61,9 +61,6 @@ jobs:
           path: ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline/report/
       - slack/notify:
           message: ":chupacabra: New report available for this commit $COMMIT_HASH with $TPS tps"
-      - slack/status:
-          fail_only: true
-          failure_message: ":alert: The performance test failed"
     working_directory: ~/src
 workflows:
   version: 2
