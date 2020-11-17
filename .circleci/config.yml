@@ -67,6 +67,14 @@ jobs:
     working_directory: ~/src
 workflows:
   version: 2
-  performance-test:
+  nightly:
+    triggers:
+      - schedule:
+          # At 16:00 on Tuesday and Thursday UTC
+          cron: "0 16 * * 2,4"
+          filters:
+            branches:
+              only:
+                - test-perf
     jobs:
       - caliper-test
