@@ -49,7 +49,7 @@ jobs:
             echo "Run test"
             cd ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline
             ./scripts/run_test.sh $TPS
-          no_output_timeout: 10m
+          no_output_timeout: 20m
       - run:
           name : Terraform destroy
           command: |
