@@ -1,4 +1,13 @@
 
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
+}
+
 provider "aws" {
   version = "~> 2.7"
   region = "${var.region}"
@@ -244,7 +253,7 @@ resource "aws_security_group" "eth_sg" {
     protocol    = "tcp"
     cidr_blocks = ["${var.vpc_cidr}"]
   }
-  
+
   ingress {
     from_port   = 8888
     to_port     = 8888
@@ -569,7 +578,7 @@ resource "aws_instance" "orion_rpcnode" {
     inline = [
       "timeout 120 /bin/bash -c 'until stat /var/lib/cloud/instance/boot-finished 2>/dev/null; do echo waiting ...; sleep 5; done'",
       "sudo apt-get update && sudo apt-get install -y apparmor apt-transport-https ca-certificates curl build-essential openjdk-11-jdk python3 python3-setuptools python3-pip python3-dev python3-virtualenv python3-venv virtualenv",
-      "sudo sh $HOME/orion/setup.sh '${var.orion_version}' '${var.orion_download_url}' '${aws_instance.orion_bootnode[0].private_ip}' '${self.private_ip}' '${self.private_ip}'", 
+      "sudo sh $HOME/orion/setup.sh '${var.orion_version}' '${var.orion_download_url}' '${aws_instance.orion_bootnode[0].private_ip}' '${self.private_ip}' '${self.private_ip}'",
       "sleep 30",
     ]
   }
@@ -614,7 +623,7 @@ resource "aws_instance" "orion_node" {
     inline = [
       "timeout 120 /bin/bash -c 'until stat /var/lib/cloud/instance/boot-finished 2>/dev/null; do echo waiting ...; sleep 5; done'",
       "sudo apt-get update && sudo apt-get install -y apparmor apt-transport-https ca-certificates curl build-essential openjdk-11-jdk python3 python3-setuptools python3-pip python3-dev python3-virtualenv python3-venv virtualenv",
-      "sudo sh $HOME/orion/setup.sh '${var.orion_version}' '${var.orion_download_url}' '${aws_instance.orion_bootnode[0].private_ip}' '${self.private_ip}' '${self.private_ip}'", 
+      "sudo sh $HOME/orion/setup.sh '${var.orion_version}' '${var.orion_download_url}' '${aws_instance.orion_bootnode[0].private_ip}' '${self.private_ip}' '${self.private_ip}'",
       "sleep 30",
     ]
   }
