@@ -64,9 +64,6 @@ jobs:
     working_directory: ~/src
 workflows:
   version: 2
-  default:
-    jobs:
-      - caliper-test
   nightly:
     triggers:
       - schedule:
