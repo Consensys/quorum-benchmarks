@@ -66,7 +66,7 @@ variable "besu_version" {
 }
 
 variable "besu_download_url" {
-  default = "https://bintray.com/hyperledger-org/besu-repo/download_file?file_path=besu-{{besu_version}}.tar.gz"
+  default = "https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/{{besu_version}}/besu-{{besu_version}}.tar.gz"
 }
 
 variable "node_count" {

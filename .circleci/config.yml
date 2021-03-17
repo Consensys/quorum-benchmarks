@@ -32,7 +32,7 @@ jobs:
               echo "export COMMIT_HASH=`curl 'https://circleci.com/api/v1.1/project/github/hyperledger/besu/tree/master?filter=completed&shallow=true' | jq '[.[] | select(.workflows.job_name=="publish")][0].vcs_revision'`" >> $BASH_ENV
               source $BASH_ENV
               BESU_VERSION=`curl "https://raw.githubusercontent.com/hyperledger/besu/$COMMIT_HASH/gradle.properties" | cut -d '=' -f 2`
-              DOWNLOAD_LINK="https://bintray.com/hyperledger-org/besu-repo/download_file?file_path=besu-$BESU_VERSION.tar.gz"
+              DOWNLOAD_LINK="https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/$BESU_VERSION/besu-$BESU_VERSION.tar.gz"
             else
               echo "export COMMIT_HASH=`curl "https://circleci.com/api/v1.1/project/github/hyperledger/besu/$BUILD_JOB" | jq '.vcs_revision'`" >> $BASH_ENV
               source $BASH_ENV
