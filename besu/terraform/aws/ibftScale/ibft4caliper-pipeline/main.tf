@@ -70,7 +70,7 @@ resource "aws_instance" "monitoring" {
   instance_type = "t3.micro"
   key_name = "${var.default_ssh_key}"
   subnet_id = "${module.vpc.public_subnets[0]}"
-  vpc_security_group_ids = ["${aws_security_group.monitoring_sg.id}"]
+  vpc_security_group_ids = ["${module.ssh_security_group.security_group_id}", "${aws_security_group.monitoring_sg.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.monitoring_profile.name}"
   associate_public_ip_address = true
   ebs_optimized = true
@@ -128,7 +128,7 @@ resource "aws_instance" "caliper" {
   instance_type = "${var.caliper_instance_type}"
   key_name = "${var.default_ssh_key}"
   subnet_id = "${module.vpc.public_subnets[0]}"
-  vpc_security_group_ids = []
+  vpc_security_group_ids = ["${module.ssh_security_group.security_group_id}"]
   associate_public_ip_address = true
   ebs_optimized = true
   root_block_device {
@@ -259,7 +259,7 @@ resource "aws_instance" "ibft_bootnode" {
   instance_type = "${var.bootnode_instance_type}"
   key_name = "${var.default_ssh_key}"
   subnet_id = "${module.vpc.public_subnets[0]}"
-  vpc_security_group_ids = ["${aws_security_group.eth_sg.id}"]
+  vpc_security_group_ids = ["${module.ssh_security_group.security_group_id}", "${aws_security_group.eth_sg.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.monitoring_profile.name}"
   associate_public_ip_address = true
   ebs_optimized = true
@@ -328,7 +328,7 @@ resource "aws_instance" "ibft_rpcnode" {
   instance_type = "${var.rpcnode_instance_type}"
   key_name = "${var.default_ssh_key}"
   subnet_id = "${module.vpc.public_subnets[1]}"
-  vpc_security_group_ids = ["${aws_security_group.eth_sg.id}"]
+  vpc_security_group_ids = ["${module.ssh_security_group.security_group_id}", "${aws_security_group.eth_sg.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.monitoring_profile.name}"
   associate_public_ip_address = true
   ebs_optimized = true
@@ -398,7 +398,7 @@ resource "aws_instance" "ibft_nodes" {
   instance_type = "${var.node_instance_type}"
   key_name = "${var.default_ssh_key}"
   subnet_id = "${element(module.vpc.public_subnets, count.index % 3)}"
-  vpc_security_group_ids = ["${aws_security_group.eth_sg.id}"]
+  vpc_security_group_ids = ["${module.ssh_security_group.security_group_id}", "${aws_security_group.eth_sg.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.monitoring_profile.name}"
   associate_public_ip_address = true
   ebs_optimized = true
