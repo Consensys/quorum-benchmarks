@@ -40,7 +40,7 @@ jobs:
               DOWNLOAD_LINK=`curl "https://circleci.com/api/v1.1/project/github/hyperledger/besu/$BUILD_JOB/artifacts" | jq -r '[.[] | select(.url|test(".tar.gz"))][0].url'`
             fi
 
-            terraform apply -var 'vpc_name=nightly-perf-test' -var 'default_ssh_key=perf-test' -var 'caliper_version=v0.3.2' -var 'caliper_instance_type=c5.2xlarge' -var 'node_instance_type=c5d.4xlarge' -var 'rpcnode_instance_type=c5d.4xlarge' -var 'bootnode_instance_type=c5d.4xlarge' -var "besu_version=$BESU_VERSION" -var "besu_download_url=$DOWNLOAD_LINK" -auto-approve
+            terraform apply -var 'vpc_name=nightly-perf-besu' -var 'default_ssh_key=perf-test' -var 'caliper_version=v0.3.2' -var 'caliper_instance_type=c5.2xlarge' -var 'node_instance_type=c5d.4xlarge' -var 'rpcnode_instance_type=c5d.4xlarge' -var 'bootnode_instance_type=c5d.4xlarge' -var "besu_version=$BESU_VERSION" -var "besu_download_url=$DOWNLOAD_LINK" -auto-approve
       - run:
           name: Run Test
           command: |
@@ -54,7 +54,7 @@ jobs:
           name : Terraform destroy
           command: |
             cd ./besu/terraform/aws/ibftScale/ibft4caliper-pipeline
-            terraform destroy -var 'vpc_name=nightly-perf-test' -auto-approve
+            terraform destroy -var 'vpc_name=nightly-perf-besu' -auto-approve
           when: always
       - store_artifacts:
           name: Uploading report
