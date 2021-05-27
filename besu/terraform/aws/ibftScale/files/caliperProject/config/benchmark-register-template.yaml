@@ -1,0 +1,24 @@
+---
+test:
+  name: Performance test
+  description: Benchmark to test the backend DLT's
+    performance with simple account opening & querying transactions
+  workers:
+    type: local
+    number: 1
+  rounds:
+  - label: register-${TEST_TPS}
+    description: register people on the chain
+    txNumber: ${TEST_TX_NUMBER} # 5 minutes
+    rateControl:
+      type: fixed-rate
+      opts:
+        tps: ${TEST_TPS}
+    callback: config/register.js
+monitor:
+  type:
+  - docker
+  docker:
+    name:
+    - all
+  interval: 1
